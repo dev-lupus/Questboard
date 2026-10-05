@@ -23,6 +23,9 @@ dependencies {
 
     // This dependency is used by the application.
     implementation libs.guava
+
+	// JSON support
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.22.3'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

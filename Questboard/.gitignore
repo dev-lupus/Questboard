@@ -6,3 +6,9 @@ build
 
 # Ignore Kotlin plugin data
 .kotlin
+
+# Ignore Eclipse Metadata
+.project
+.classpath
+.settings/
+bin/
