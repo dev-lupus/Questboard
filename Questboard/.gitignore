@@ -12,3 +12,6 @@ build
 .classpath
 .settings/
 bin/
+
+# Ignore some nvim path that was made for no reason 
+Questboard/nvim
