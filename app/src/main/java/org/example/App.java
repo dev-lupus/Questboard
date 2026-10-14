@@ -5,6 +5,7 @@ import java.nio.file.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,6 +22,9 @@ public class App {
 		
 		// JSON de- and encoder
 		ObjectMapper jsonMapper = new ObjectMapper();
+
+		//
+		Scanner scanner = new Scanner(System.in);
 
 		// make ~/.local/share/Questboard/ if neccessary
 		Path gameData = Path.of(System.getProperty("user.home"), ".local", "share", "Questboard");
@@ -89,6 +93,14 @@ public class App {
 			testJson
 			""");
 	}
+	
+	// taking input with a prompt
+	static String userInput(String prompt, Scanner scan){
+		System.out.print( "[" + prompt + "]> " );
+		return scan.nextLine();
+	}
+	//taking input with fallback prompt
+	static String userInput(Scanner scan){ System.out.print("[Awaiting input]> "); return scan.nextLine(); }
 }
 
 
