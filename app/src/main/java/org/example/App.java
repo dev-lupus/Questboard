@@ -56,7 +56,7 @@ public class App {
 				newSave();
 				break;
 			case("list"):
-				for(saveFileIndex.saveFile s : index.index) { System.out.println( "=={ " + s.id + " - " + s.name + " }==" ); }
+				for(saveFileIndex.saveFile s : index.index) { System.out.println( "=={ " + s.id + " - " + s.name ); }
 				break;
 			case("help"):
 				printHelp();
