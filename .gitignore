@@ -15,3 +15,6 @@ bin/
 
 # Ignore some nvim path that was made for no reason 
 Questboard/nvim
+
+# Ignore IntelliJ Idea's folder because NO I DON'T WANT THAT IN MY FUCKING PROJECT
+.idea

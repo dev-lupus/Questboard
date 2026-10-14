@@ -12,23 +12,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-
-  //==========//
- // Main App //
-//==========//
-
 public class App {
-    public static void main(String[] args) {
-		
-		// JSON de- and encoder
-		ObjectMapper jsonMapper = new ObjectMapper();
 
-		//
-		Scanner scanner = new Scanner(System.in);
+	// JSON de- and encoder
+	public static ObjectMapper jsonMapper = new ObjectMapper();
+
+	// user input reader
+	public static Scanner scanner = new Scanner(System.in);
+
+	// game data folder
+	public static Path gameData = Path.of(System.getProperty("user.home"), ".local", "share", "Questboard");
+	public static String[] folders = { "saveData" };
+
+	// save data handling
+	public static Path indexFile = gameData.resolve(folders[0]).resolve("index.json");
+	public static saveFileIndex index = new saveFileIndex();
+
+
+
+    public static void main(String[] args) {
 
 		// make ~/.local/share/Questboard/ if neccessary
-		Path gameData = Path.of(System.getProperty("user.home"), ".local", "share", "Questboard");
-		String[] folders = { "saveData" };
 		try {
 			for( String i : folders ) {
 				Files.createDirectories(gameData.resolve(i));
@@ -36,8 +40,6 @@ public class App {
 		} catch(IOException e) { e.printStackTrace(); }
 
 		// create the save file index if needed
-		Path indexFile = gameData.resolve(folders[0]).resolve("index.json");
-		saveFileIndex index = new saveFileIndex();
 		try{
 			if(!Files.isRegularFile(indexFile)) {
 				jsonMapper.writeValue(indexFile.toFile(), index);
@@ -49,26 +51,24 @@ public class App {
 
 
  		// taking the args and turning them into commands
-		try {
-			switch ( args[0] ) {
-				case("new"):
-					System.out.println("currently not implementex ;P"); //save do $XDG_DATA_HOME/Questboard/save_files later on
+		try { switch ( args[0] ) {
+			case("new"):
+				newSave();
+				break;
+			case("list"):
+				for(saveFileIndex.saveFile s : index.index) { System.out.println( "=={ " + s.id + " - " + s.name + " }==" ); }
+				break;
+			case("help"):
+				printHelp();
+				break;
+			default:
+				System.out.print("""
+					Argument not recognised
+					Following arguments are available:
 
-					break;
-				case("help"):
-					printHelp();
-					break;
-				default:
-					System.out.print("""
-						Argument not recognised
-						Following arguments are available:
-
-
-						""");
-					printHelp();
-			}
-		}
-		catch( ArrayIndexOutOfBoundsException e ) {
+					""");
+				printHelp();
+		} } catch( ArrayIndexOutOfBoundsException e ) {
 			System.out.print("""
 				No arguments passed
 				Following arguments are available:
@@ -88,53 +88,65 @@ public class App {
 	static void printHelp() {
 		System.out.print("""
 			help	prints this help screen
-			new		create new save; not functional rn ;P
-			
-			testJson
+			new		create new save
+			list	list save files
 			""");
 	}
 	
 	// taking input with a prompt
-	static String userInput(String prompt, Scanner scan){
+	static String userInput(String prompt){
 		System.out.print( "[" + prompt + "]> " );
-		return scan.nextLine();
+        return scanner.nextLine();
 	}
-	//taking input with fallback prompt
-	static String userInput(Scanner scan){ System.out.print("[Awaiting input]> "); return scan.nextLine(); }
+	// taking input with fallback prompt
+	static String userInput(){ System.out.print("[Awaiting input]> "); return scanner.nextLine(); }
+
+	// making a new save File
+	static void newSave() {
+		index.index.add(new saveFileIndex.saveFile(userInput("input name for new save"), index.findFreeID()));
+		try{
+			jsonMapper.writeValue(indexFile.toFile(), index);
+			Files.createDirectories(gameData.resolve(folders[0]).resolve(index.index.getLast().file));
+		} catch(Exception e){ e.printStackTrace(); }
+	}
 }
 
 
-// Class to Index the amount of saveFiles present, their names, aswell as their file paths
+
+// Class to Index the amount of saveFiles present, their names, as well as their file paths
 class saveFileIndex {
 
 	//array holding saveFile objects with information about the save files
 	public ArrayList<saveFile> index = new ArrayList<saveFile>();
-	
+
+
+
 	// saveFile class
 	public static class saveFile {
 		public String name;
 		public final int id;
 		public final String file;
 
+
 		// constructor
-		private saveFile(String fileName, int ID) {
+		public saveFile(String fileName, int ID) {
 			this.name = fileName;
 			this.id = ID;
 			this.file = "Save_" + id;
 
 		}
-
-		// constructor for Jackson, to propperly map all json values
+		// constructor for Jackson, to properly map all json values
 		@JsonCreator private saveFile(@JsonProperty("name") String name, @JsonProperty("id") int id, @JsonProperty("file") String file){
 			this.name = name;
 			this.id = id;
 			this.file = file;
 		}
-
 	}
 
+
+
 	// method to find the first Free ID
-	private int findFreeID() {
+	public int findFreeID() {
 		for (int n = 1; ; n++) {
 			int candidate = n;
 			if (index.stream().noneMatch(s -> s.id == candidate)) {
