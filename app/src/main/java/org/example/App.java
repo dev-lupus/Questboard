@@ -2,9 +2,9 @@ package org.example;
 
 
 import java.nio.file.*;
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -20,6 +20,7 @@ public class App {
 	// user input reader
 	public static Scanner scanner = new Scanner(System.in);
 
+
 	// game data folder
 	public static Path gameData = Path.of(System.getProperty("user.home"), ".local", "share", "Questboard");
 	public static String[] folders = { "saveData" };
@@ -31,6 +32,10 @@ public class App {
 
 
     public static void main(String[] args) {
+
+		// sort the save file index
+		index.index.sort(Comparator.comparingInt(x -> x.id));
+
 
 		// make ~/.local/share/Questboard/ if neccessary
 		try {
@@ -54,9 +59,22 @@ public class App {
 		try { switch ( args[0] ) {
 			case("new"):
 				newSave();
+				changeSelected(index.index.getLast().id);
 				break;
 			case("list"):
-				for(saveFileIndex.saveFile s : index.index) { System.out.println( "=={ " + s.id + " - " + s.name ); }
+				printSaveList();
+				break;
+			case("select"):
+				printSaveList();
+				try{
+					changeSelected(
+							Integer.parseInt(
+									userInput("Select save file")
+							)
+					);
+				} catch(NumberFormatException e){
+					System.out.println("No number was input - aborting selection");
+				}
 				break;
 			case("help"):
 				printHelp();
@@ -75,10 +93,7 @@ public class App {
 
 				""");
 			printHelp();
-		}
-		catch( Exception e ) {
-			e.printStackTrace();
-		}
+		} catch(Exception e){e.printStackTrace();}
 
     }
 
@@ -90,14 +105,16 @@ public class App {
 			help	prints this help screen
 			new		create new save
 			list	list save files
+			select	select save file
 			""");
 	}
 	
 	// taking input with a prompt
 	static String userInput(String prompt){
 		System.out.print( "[" + prompt + "]> " );
-        return scanner.nextLine();
+		return scanner.nextLine();
 	}
+
 	// taking input with fallback prompt
 	static String userInput(){ System.out.print("[Awaiting input]> "); return scanner.nextLine(); }
 
@@ -109,7 +126,27 @@ public class App {
 			Files.createDirectories(gameData.resolve(folders[0]).resolve(index.index.getLast().file));
 		} catch(Exception e){ e.printStackTrace(); }
 	}
+
+	// list all save files
+	static void printSaveList() {
+		for(saveFileIndex.saveFile s : index.index) {
+			if(index.currentSave == s.id){ System.out.println( ">> " + s.id + ". " + s.name ); }
+			else { System.out.println( "   " + s.id + ". " + s.name ); }
+		}
+	}
+
+	// change selected save file
+	static void changeSelected(int s) {
+		if(index.index.size() >= s){ index.currentSave = s; }
+		try{
+			jsonMapper.writeValue(indexFile.toFile(), index);
+			Files.createDirectories(gameData.resolve(folders[0]).resolve(index.index.getLast().file));
+		} catch(Exception e){ e.printStackTrace(); }
+		System.out.println( "Selected save file: " + index.index.get(s - 1).name );
+	}
 }
+
+
 
 
 
@@ -118,6 +155,7 @@ class saveFileIndex {
 
 	//array holding saveFile objects with information about the save files
 	public ArrayList<saveFile> index = new ArrayList<saveFile>();
+	public int currentSave = 0;
 
 
 
